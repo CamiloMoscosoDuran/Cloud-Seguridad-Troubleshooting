@@ -49,19 +49,43 @@ Proyecto práctico correspondiente a la práctica **S12 | AP9: Despliegue Cloud,
 ## 🏛️ Diagrama de Arquitectura
 
 ```mermaid
-graph TD
-    Client([Internet / Usuario]) -->|HTTP :80| ELB[AWS Elastic Load Balancer]
-    ELB -->|NodePort :31080| K8sSvc[Service: cloud-secure-app-service]
-    
-    subgraph K8s [AWS EKS Cluster - Namespace: practica-s12]
-        K8sSvc -->|TargetPort :8080| Pod1[Pod: cloud-secure-app #1<br/>UID: 10001 | ReadOnly FS]
-        K8sSvc -->|TargetPort :8080| Pod2[Pod: cloud-secure-app #2<br/>UID: 10001 | ReadOnly FS]
-        
-        CM[(ConfigMap: app-security-config)] -.->|Inyección Env| Pod1
-        CM -.->|Inyección Env| Pod2
-        SEC[(Secret: app-db-secret)] -.->|Base64 Creds| Pod1
-        SEC -.->|Base64 Creds| Pod2
+flowchart LR
+    Usuario(["Usuario / Internet"])
+    ELB["AWS Elastic Load Balancer"]
+
+    Usuario -->|"HTTP :80"| ELB
+
+    subgraph EKS["Amazon EKS Cluster"]
+        subgraph NS["Namespace: practica-s12"]
+            SVC["Service<br/>cloud-secure-app-service"]
+
+            POD1["Pod 1<br/>cloud-secure-app<br/>UID 10001 | FS solo lectura"]
+            POD2["Pod 2<br/>cloud-secure-app<br/>UID 10001 | FS solo lectura"]
+
+            CM[("ConfigMap<br/>app-security-config")]
+            SEC[("Secret<br/>app-db-secret")]
+
+            SVC -->|"NodePort :31080<br/>TargetPort :8080"| POD1
+            SVC -->|"NodePort :31080<br/>TargetPort :8080"| POD2
+
+            CM -.->|"Variables de entorno"| POD1
+            CM -.->|"Variables de entorno"| POD2
+            SEC -.->|"Credenciales Base64"| POD1
+            SEC -.->|"Credenciales Base64"| POD2
+        end
     end
+
+    ELB -->|"Redirige tráfico"| SVC
+
+    classDef external fill:#FF9900,color:#000,stroke:#CC7A00,stroke-width:2px
+    classDef service fill:#326CE5,color:#fff,stroke:#1D4F9E,stroke-width:2px
+    classDef pod fill:#69A1D6,color:#fff,stroke:#326CE5,stroke-width:2px
+    classDef config fill:#4CAF50,color:#fff,stroke:#2E7D32,stroke-width:2px
+
+    class Usuario,ELB external
+    class SVC service
+    class POD1,POD2 pod
+    class CM,SEC config
 ```
 
 ---
@@ -174,6 +198,14 @@ spec:
 | **C. Sondas de Salud** | Reinicios continuos (`RESTARTS: 5+`) / `Unhealthy` | `livenessProbe` apuntaba a ruta inexistente con `initialDelaySeconds: 0`. | Corrección a endpoint `/healthz`, `initialDelaySeconds: 10s`, `periodSeconds: 10s`. |
 
 Consulte la bitácora técnica completa en [`docs/troubleshooting-log.md`](docs/troubleshooting-log.md).
+
+---
+
+## 📤 Entregables del Proyecto
+
+* **Repositorio de GitHub:** `https://github.com/<tu-usuario>/despliegue-cloud-seguridad-troubleshooting`
+* **Informe Técnico en Google Docs:** [Enlace a Google Docs con las 4 evidencias explicadas]
+* **Video Demostrativo (3 a 5 min):** [Enlace a Video en YouTube / Google Drive]
 
 ---
 
