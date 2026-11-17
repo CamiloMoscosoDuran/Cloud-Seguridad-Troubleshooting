@@ -1,0 +1,142 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloud-secure-app
+  namespace: practica-s12
+  labels:
+    app.kubernetes.io/name: cloud-secure-app
+    app.kubernetes.io/part-of: s12-project
+    app.kubernetes.io/version: "1.0.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cloud-secure-app
+  template:
+    metadata:
+      labels:
+        app: cloud-secure-app
+    spec:
+      # =========================================================
+      # PASO 2: HARDENING DE SEGURIDAD (SecurityContext a nivel Pod)
+      # =========================================================
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+        - name: app-container
+          # Imagen oficial Busybox completa con todos los comandos (httpd, whoami, id, sh)
+          image: busybox:1.36.1
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              mkdir -p /tmp/www
+              echo '{"status":"OK","message":"Despliegue Cloud Seguro S12 Exitoso","environment":"production","database_connected":true}' > /tmp/www/index.html
+              echo 'OK' > /tmp/www/healthz
+              exec httpd -f -p 8080 -h /tmp/www
+          ports:
+            - name: http-port
+              containerPort: 8080
+              protocol: TCP
+
+          # =========================================================
+          # PASO 2: HARDENING DE SEGURIDAD (SecurityContext a nivel Contenedor)
+          # =========================================================
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            capabilities:
+              drop:
+                - ALL
+
+          # =========================================================
+          # PASO 3 - ESCENARIO A: INYECCIÓN CORRECTA DE VARIABLES
+          # =========================================================
+          env:
+            - name: APP_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: app-security-config
+                  key: APP_ENV
+            - name: APP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-security-config
+                  key: APP_PORT
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: app-security-config
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-security-config
+                  key: DB_PORT
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: app-db-secret
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-db-secret
+                  key: DB_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-db-secret
+                  key: JWT_SECRET
+
+          # =========================================================
+          # PASO 3 - ESCENARIO C: SONDAS DE SALUD CORREGIDAS
+          # =========================================================
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+            successThreshold: 1
+
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 2
+            successThreshold: 1
+
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "150m"
+              memory: "64Mi"
+
+          # Volúmenes temporales de escritura necesarios para readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: tmp-dir
+              mountPath: /tmp
+            - name: var-run
+              mountPath: /var/run
+
+      volumes:
+        - name: tmp-dir
+          emptyDir: {}
+        - name: var-run
+          emptyDir: {}

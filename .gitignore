@@ -1,0 +1,15 @@
+# Kubernetes / Helm
+*.kubeconfig
+*.log
+kubeconfig*
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.bak

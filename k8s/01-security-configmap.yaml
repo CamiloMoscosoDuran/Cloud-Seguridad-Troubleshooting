@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-security-config
+  namespace: practica-s12
+  labels:
+    app.kubernetes.io/name: cloud-secure-app
+    app.kubernetes.io/part-of: s12-project
+data:
+  APP_ENV: "production"
+  APP_PORT: "8080"
+  LOG_LEVEL: "info"
+  # Endpoint FQDN interno de Kubernetes para resolución DNS del servicio de base de datos
+  DB_HOST: "db-service.practica-s12.svc.cluster.local"
+  DB_PORT: "5432"
+  DB_NAME: "cloud_production_db"
+  # Configuración de sondas de salud
+  HEALTH_CHECK_PATH: "/healthz"
+  METRICS_ENABLED: "true"
