@@ -177,13 +177,5 @@ Consulte la bitácora técnica completa en [`docs/troubleshooting-log.md`](docs/
 
 ---
 
-## 📤 Entregables del Proyecto
-
-* **Repositorio de GitHub:** `https://github.com/<tu-usuario>/despliegue-cloud-seguridad-troubleshooting`
-* **Informe Técnico en Google Docs:** [Enlace a Google Docs con las 4 evidencias explicadas]
-* **Video Demostrativo (3 a 5 min):** [Enlace a Video en YouTube / Google Drive]
-
----
-
 ## 📄 Licencia
 Proyecto distribuido bajo la Licencia MIT. Desarrollado con fines académicos para el laboratorio S12 | AP9.
